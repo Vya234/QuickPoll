@@ -19,7 +19,7 @@
 
 | Layer | Technologies |
 |--------|----------------|
-| **Frontend** | React 18, React Router, Tailwind CSS, Axios |
+| **Frontend** | React 18 (Create React App), React Router, Tailwind CSS, Axios |
 | **Backend** | Node.js, Express, Socket.IO |
 | **Database** | MongoDB (Mongoose ODM) |
 
@@ -63,71 +63,107 @@
 1. **Clone the repository**
 
    ```bash
-   git clone <your-repo-url>
-   cd poll-maker
+   git clone https://github.com/Vya234/QuickPoll.git
+   cd QuickPoll
    ```
 
-2. **Install frontend dependencies** (repository root)
+2. **Install dependencies** (Create React App frontend at the repo root **and** the Express API under `backend/`)
 
    ```bash
    npm install
+   cd backend && npm install && cd ..
    ```
 
-3. **Install backend dependencies**
+3. **Create `backend/.env`** with your MongoDB URI, JWT signing secret, and port (see [Environment Variables](#environment-variables)):
+
+   ```env
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_super_secret_key
+   PORT=5000
+   ```
+
+   You can copy `backend/.env.example` and fill in real values.
+
+4. **Create root `.env`** so the CRA app points at the local API:
+
+   ```env
+   REACT_APP_API_URL=http://localhost:5000
+   ```
+
+   Copy root `.env.example` if you prefer; replace the URL with your deployed API when building for production.
+
+5. **Run the backend** (from the repository root):
 
    ```bash
-   cd backend
-   npm install
-   cd ..
+   cd backend && npm run dev
    ```
 
-### Backend setup
+   The server listens on **port 5000** unless `PORT` in `backend/.env` overrides it.
 
-1. Create `backend/.env` (see [Environment variables](#-environment-variables)).
-
-2. Start the API server:
-
-   ```bash
-   cd backend
-   npm run dev
-   ```
-
-   The server defaults to **port 5000** (or `PORT` from `.env`).
-
-### Frontend setup
-
-1. From the **repository root**, start the React app:
+6. **Run the frontend** (in a second terminal, from the repository root):
 
    ```bash
    npm start
    ```
 
-2. Open [http://localhost:3000](http://localhost:3000). The dev server proxies API calls to the backend when using the default Create React App `proxy` to `http://localhost:5000`.
+7. Open [http://localhost:3000](http://localhost:3000). The Axios client uses `REACT_APP_API_URL` as the API base URL (see [Environment Variables](#environment-variables)).
 
-### 🔐 Environment variables
+---
 
-**`backend/.env`** (required for the API):
+## 🔐 Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `MONGO_URI` | MongoDB connection string |
-| `JWT_SECRET` | Secret used to sign authentication tokens |
-| `PORT` | *(optional)* Server port (default: `5000`) |
-
-**Frontend** *(optional — for production or custom API URL)*:
+### Backend (`backend/.env`)
 
 | Variable | Description |
 |----------|-------------|
-| `REACT_APP_API_URL` | Base URL of the API (e.g. `https://api.example.com`). If unset, the app uses `http://localhost:5000` in development via the bundled API client defaults. |
+| `MONGO_URI` | MongoDB connection string (required) |
+| `JWT_SECRET` | Secret used to sign and verify JWTs (required) |
+| `PORT` | HTTP port for Express and Socket.IO (default: `5000` if unset) |
 
-> **Note:** Never commit real `.env` files. Add `.env` to `.gitignore` and use `.env.example` in teams when sharing variable names only.
+### Frontend (root `.env`)
+
+Create React App only exposes variables prefixed with `REACT_APP_`.
+
+| Variable | Description |
+|----------|-------------|
+| `REACT_APP_API_URL` | Base URL of the backend API (e.g. `http://localhost:5000` locally, or your Render service URL in production). The app falls back to `http://localhost:5000` in code if unset. |
+
+> **Security:** Do not commit real `.env` files. They are listed in `.gitignore`. Commit `backend/.env.example` and root `.env.example` for variable names only.
+
+---
+
+## ☁️ Deployment
+
+### Render (backend)
+
+Configure a **Web Service** with the API code:
+
+| Setting | Value |
+|--------|--------|
+| **Root Directory** | `backend` |
+| **Build Command** | `npm install` |
+| **Start Command** | `npm start` |
+| **Environment variables** | `MONGO_URI`, `JWT_SECRET`, `PORT` (Render usually sets `PORT` automatically; align with your start script) |
+
+Set `MONGO_URI` and `JWT_SECRET` in the Render dashboard to match your Atlas (or other) MongoDB deployment.
+
+### Vercel (frontend — Create React App)
+
+| Setting | Value |
+|--------|--------|
+| **Root Directory** | `.` (repository root) |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `build` |
+| **Environment variable** | `REACT_APP_API_URL` — set to your **Render** backend URL (e.g. `https://your-service.onrender.com`, no trailing slash unless your API requires it) |
+
+After you have the **Vercel** production URL, add it to the `CORS_ORIGINS` array in `backend/src/config/constants.js` (used by both Express `cors` and Socket.IO), redeploy the backend, and ensure `credentials: true` stays compatible with your cookie/JWT header usage from that origin.
 
 ---
 
 ## 📁 Folder Structure
 
 ```
-poll-maker/
+QuickPoll/
 ├── public/                 # Static assets (CRA)
 ├── screenshots/            # README screenshots (add your images here)
 ├── src/
@@ -171,4 +207,3 @@ poll-maker/
 
 Kavya Rai  
 IIT Kharagpur
-
